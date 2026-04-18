@@ -29,6 +29,13 @@ logger = logging.getLogger(__name__)
 # to avoid flooding production gateway logs.
 _DEBUG_INTERRUPT = bool(os.getenv("HERMES_DEBUG_INTERRUPT"))
 
+if _DEBUG_INTERRUPT:
+    # AIAgent's quiet_mode path (run_agent.py) forces the `tools` logger to
+    # ERROR on CLI startup, which would silently swallow every trace we emit.
+    # Force this module's own logger back to INFO so the trace is visible in
+    # agent.log regardless of quiet-mode.  Scoped to the opt-in case only.
+    logger.setLevel(logging.INFO)
+
 # Thread-local activity callback.  The agent sets this before a tool call so
 # long-running _wait_for_process loops can report liveness to the gateway.
 _activity_callback_local = threading.local()
