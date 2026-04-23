@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 
 import type { CompletionItem } from '../app/interfaces.js'
+import { getUiState } from '../app/uiStore.js'
 import type { GatewayClient } from '../gatewayClient.js'
 import type { CompletionResponse } from '../gatewayTypes.js'
 import { asRpcResult } from '../lib/rpc.js'
@@ -50,7 +51,7 @@ export function useCompletion(input: string, blocked: boolean, gw: GatewayClient
       }
 
       const req = isSlash
-        ? gw.request<CompletionResponse>('complete.slash', { text: input })
+        ? gw.request<CompletionResponse>('complete.slash', { text: input, session_id: getUiState().sid })
         : gw.request<CompletionResponse>('complete.path', { word: pathWord })
 
       req

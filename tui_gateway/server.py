@@ -3255,8 +3255,37 @@ def _(rid, params: dict) -> dict:
 
         from agent.skill_commands import get_skill_commands
 
+        session_id = str(params.get("session_id") or "")
+
+        def _model_completion_providers() -> list[dict]:
+            from hermes_cli.model_switch import list_authenticated_providers
+
+            cfg = _load_cfg()
+            session = _sessions.get(session_id)
+            agent = session.get("agent") if session else None
+            model_cfg = cfg.get("model", {})
+            current_provider = getattr(agent, "provider", "") or ""
+            if not current_provider and isinstance(model_cfg, dict):
+                current_provider = str(model_cfg.get("provider", "") or "")
+            try:
+                from hermes_cli.config import get_compatible_custom_providers
+                custom_providers = get_compatible_custom_providers(cfg)
+            except Exception:
+                custom_providers = (
+                    cfg.get("custom_providers")
+                    if isinstance(cfg.get("custom_providers"), list)
+                    else []
+                )
+            return list_authenticated_providers(
+                current_provider=current_provider,
+                user_providers=cfg.get("providers") if isinstance(cfg.get("providers"), dict) else {},
+                custom_providers=custom_providers,
+                max_models=80,
+            )
+
         completer = SlashCommandCompleter(
-            skill_commands_provider=lambda: get_skill_commands()
+            skill_commands_provider=lambda: get_skill_commands(),
+            model_providers_provider=_model_completion_providers,
         )
         doc = Document(text, len(text))
         items = [
